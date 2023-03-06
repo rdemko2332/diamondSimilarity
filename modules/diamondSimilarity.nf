@@ -30,6 +30,20 @@ process diamondSimilarity {
     template 'diamondSimilarity.bash'
 }
 
+process sortOutput {
+  publishDir params.outputDir, saveAs: {filename->params.dataFile}
+  
+  input:
+    path output
+        
+  output:
+    path 'diamondSimilarity.out'
+
+  script:
+    """
+    sed 's/^>/\\x00&/' $output  | sort -z | tr -d '\\0' > diamondSimilarity.out
+    """
+}
 
 workflow nonConfiguredDatabase {
   take:
@@ -38,7 +52,7 @@ workflow nonConfiguredDatabase {
   main:
     database = createDatabase(params.databaseFasta)
     diamondSimilarityResults = diamondSimilarity(seqs, database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs)
-    diamondSimilarityResults.output_file | collectFile(storeDir: params.outputDir, name: params.dataFile)
+    diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
     diamondSimilarityResults.log_file | collectFile(storeDir: params.outputDir, name: params.logFile)
 }
 
@@ -48,7 +62,7 @@ workflow preConfiguredDatabase {
 
   main:
     diamondSimilarityResults = diamondSimilarity(seqs, params.database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs)
-    diamondSimilarityResults.output_file | collectFile(storeDir: params.outputDir, name: params.dataFile)
+    diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
     diamondSimilarityResults.log_file | collectFile(storeDir: params.outputDir, name: params.logFile)
     
 }

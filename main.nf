@@ -6,7 +6,7 @@ nextflow.enable.dsl=2
 //---------------------------------------------------------------
 
 if(params.seqFile) {
-  seqs = Channel.fromPath( params.seqFile )
+  seqs = Channel.fromPath( params.seqFile ).splitFasta( by:params.fastaSubsetSize, file:true  )
 }
 else {
   throw new Exception("Missing params.seqFile")

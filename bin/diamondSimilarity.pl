@@ -32,7 +32,7 @@ my $counter = 0;
 while (my $line = <$data>) {
     chomp $line;
 
-    my ($qseqid,$qlen,$sseqid,$slen,$qstart,$qend,$sstart,$send,$evalue,$bitscore,$length,$nident,$pident,$positive,$qframe,$qstrand) = split(/\t/, $line);
+    my ($qseqid,$qlen,$sseqid,$slen,$qstart,$qend,$sstart,$send,$evalue,$bitscore,$length,$nident,$pident,$positive,$qframe,$qstrand,$gaps) = split(/\t/, $line);
     my $subjectCount = $subjectCountHash{">$qseqid"};
 
     if ($counter == 0) {
@@ -49,21 +49,38 @@ while (my $line = <$data>) {
 	}
 
 	if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
-            print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:100\n";
+	    my $nonOverlappingPercent;
+	    my $roundedPercent;
+	    if ($slen < $qlen) {
+		$nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
+		$roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
+	    }
+	    else {
+                $nonOverlappingPercent = ($qlen - $gaps)/$qlen * 100;
+		$roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
+	    }
+            print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:$roundedPercent\n";
             print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
 	}
 
     } else {
-	&addSubjectsNoCount($previousQseqId,$qseqid,0,@deflines);
-	$subjectCount == 0 ? print LOG "No HSPS passed requirements for $qseqid\n" : print OUT ">$qseqid ($subjectCount subjects)\n";
-
-	if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
-          print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:100\n";
-          print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
-        }
-
+	  &addSubjectsNoCount($previousQseqId,$qseqid,0,@deflines);
+	  $subjectCount == 0 ? print LOG "No HSPS passed requirements for $qseqid\n" : print OUT ">$qseqid ($subjectCount subjects)\n";
+	  if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
+	      my $nonOverlappingPercent;
+	      my $roundedPercent;
+	      if ($slen < $qlen) {
+	          $nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
+		  $roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
+	      }
+	      else {
+                  $nonOverlappingPercent = ($qlen - $gaps)/$qlen * 100;
+		  $roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
+	      }
+              print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:$roundedPercent\n";
+              print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
+          }
     }
-
     $previousQseqId = $qseqid;
     $previousSseqId = $sseqid; 
     $counter += 1;
