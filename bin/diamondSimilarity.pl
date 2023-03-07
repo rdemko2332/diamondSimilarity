@@ -5,14 +5,15 @@ use warnings;
 use Getopt::Long;
 use List::MoreUtils qw(first_index);
 
-my ($fasta,$result,$output, $minLen, $minPercent, $minPval);
+my ($fasta,$result,$output, $minLen, $minPercent, $minPval, $remMaskedRes);
 
 &GetOptions("fasta=s"=> \$fasta,
             "result=s"=> \$result,
             "output=s"=> \$output,
             "minLen=i"=> \$minLen,
             "minPercent=i"=> \$minPercent,
-            "minPval=f"=> \$minPval);
+            "minPval=f"=> \$minPval,
+            "remMaskedRes=s" => \$remMaskedRes);
 
 $minPval = $minPval ? $minPval : 1e-5;
 $minLen = $minLen ? $minLen : 10;
@@ -32,7 +33,7 @@ my $counter = 0;
 while (my $line = <$data>) {
     chomp $line;
 
-    my ($qseqid,$qlen,$sseqid,$slen,$qstart,$qend,$sstart,$send,$evalue,$bitscore,$length,$nident,$pident,$positive,$qframe,$qstrand,$gaps) = split(/\t/, $line);
+    my ($qseqid,$qlen,$sseqid,$slen,$qstart,$qend,$sstart,$send,$evalue,$bitscore,$length,$nident,$pident,$positive,$qframe,$qstrand,$gaps,$qseq) = split(/\t/, $line);
     my $subjectCount = $subjectCountHash{">$qseqid"};
 
     if ($counter == 0) {
@@ -51,11 +52,15 @@ while (my $line = <$data>) {
 	if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
 	    my $nonOverlappingPercent;
 	    my $roundedPercent;
+	    if ($remMaskedRes eq 'true') {
+	        $qseq =~ s/X//g;
+	        length($qseq) >= 10 ? $length = length($qseq) : print LOG "RemoveMaskedResiduesFromLength: error...length is less than 10 following removal of X's\n";
+	    }
 	    if ($slen < $qlen) {
 		$nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
 		$roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
 	    }
-	    else {
+	    if ($slen >= $qlen) {
                 $nonOverlappingPercent = ($qlen - $gaps)/$qlen * 100;
 		$roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
 	    }
@@ -69,11 +74,15 @@ while (my $line = <$data>) {
 	  if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
 	      my $nonOverlappingPercent;
 	      my $roundedPercent;
+              if ($remMaskedRes eq 'true') {
+	          $qseq =~ s/X//g;
+	          length($qseq) >= 10 ? $length = length($qseq) : print LOG "RemoveMaskedResiduesFromLength: error...length is less than 10 following removal of X's\n";
+	      }
 	      if ($slen < $qlen) {
-	          $nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
+		  $nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
 		  $roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
 	      }
-	      else {
+	      if ($slen >= $qlen) {
                   $nonOverlappingPercent = ($qlen - $gaps)/$qlen * 100;
 		  $roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
 	      }
@@ -106,7 +115,7 @@ sub getSubjectCount{
     open(my $data, '<', $outFile) || die "Could not open file $outFile: $!";
     while (my $line = <$data>) {
         chomp $line;
-        my ($qseqid,$qlen,$sseqid,$slen,$qstart,$qend,$sstart,$send,$evalue,$bitscore,$length,$nident,$pident,$positive,$qframe,$qstrand) = split(/\t/, $line);
+        my ($qseqid,$qlen,$sseqid,$slen,$qstart,$qend,$sstart,$send,$evalue,$bitscore,$length,$nident,$pident,$positive,$qframe,$qstrand,$gaps,$qseq) = split(/\t/, $line);
 	if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
 	    $hash{">$qseqid"} += 1;
 	}

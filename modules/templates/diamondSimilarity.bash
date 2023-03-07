@@ -6,7 +6,7 @@ diamond blastp \
 	-d $database \
 	-q $fasta \
 	-o out.txt \
-	-f 6 qseqid qlen sseqid slen qstart qend sstart send evalue bitscore length nident pident positive qframe qstrand gaps \
+	-f 6 qseqid qlen sseqid slen qstart qend sstart send evalue bitscore length nident pident positive qframe qstrand gaps qseq \
 	--comp-based-stats 0 \
 	$blastArgs
 
@@ -16,4 +16,5 @@ perl /usr/bin/diamondSimilarity.pl \
      --output diamondSimilarity.out \
      --minLen $lengthCutoff \
      --minPercent $percentCutoff \
-     --minPval $pValCutoff
+     --minPval $pValCutoff \
+     --remMaskedRes $adjustMatchLength
