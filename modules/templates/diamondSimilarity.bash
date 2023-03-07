@@ -17,4 +17,5 @@ perl /usr/bin/diamondSimilarity.pl \
      --minLen $lengthCutoff \
      --minPercent $percentCutoff \
      --minPval $pValCutoff \
-     --remMaskedRes $adjustMatchLength
+     --remMaskedRes $adjustMatchLength \
+     --outputType $outputType

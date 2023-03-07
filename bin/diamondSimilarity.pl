@@ -5,7 +5,7 @@ use warnings;
 use Getopt::Long;
 use List::MoreUtils qw(first_index);
 
-my ($fasta,$result,$output, $minLen, $minPercent, $minPval, $remMaskedRes);
+my ($fasta,$result,$output, $minLen, $minPercent, $minPval, $remMaskedRes,$outputType);
 
 &GetOptions("fasta=s"=> \$fasta,
             "result=s"=> \$result,
@@ -13,11 +13,24 @@ my ($fasta,$result,$output, $minLen, $minPercent, $minPval, $remMaskedRes);
             "minLen=i"=> \$minLen,
             "minPercent=i"=> \$minPercent,
             "minPval=f"=> \$minPval,
-            "remMaskedRes=s" => \$remMaskedRes);
+            "remMaskedRes=s" => \$remMaskedRes,
+            "outputType=s" => \$outputType);
 
 $minPval = $minPval ? $minPval : 1e-5;
 $minLen = $minLen ? $minLen : 10;
-$minPercent = $minPercent ? $minPercent : 20; 
+$minPercent = $minPercent ? $minPercent : 20;
+$outputType = $outputType ? $outputType : "both";
+
+my $printSum = 0;
+my $printSpan = 0;
+if($outputType =~ /sum/i){
+    $printSum = 1;
+}elsif($outputType =~ /span/i){
+    $printSpan = 1;
+}elsif($outputType =~ /both/i){
+    $printSum = 1;
+    $printSpan = 1;
+}
 
 my %subjectCountHash = &getSubjectCount($fasta,$result,$minLen,$minPercent,$minPval);
 my @deflines = &getSubjectIds($fasta);
@@ -64,8 +77,12 @@ while (my $line = <$data>) {
                 $nonOverlappingPercent = ($qlen - $gaps)/$qlen * 100;
 		$roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
 	    }
-            print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:$roundedPercent\n";
-            print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
+            if ($printSum) {
+		print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:$roundedPercent\n";
+	    }
+            if ($printSpan) {
+		print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
+	    }
 	}
 
     } else {
@@ -86,8 +103,12 @@ while (my $line = <$data>) {
                   $nonOverlappingPercent = ($qlen - $gaps)/$qlen * 100;
 		  $roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
 	      }
-              print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:$roundedPercent\n";
-              print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
+	      if ($printSum) {
+		  print OUT "  Sum: $sseqid:$bitscore:$evalue:$sstart:$send:$qstart:$qend:1:$length:$nident:$positive:$qstrand:$qframe:$qlen:$slen:$roundedPercent\n";
+	      }
+              if ($printSpan) {
+		  print OUT "   HSP1: $sseqid:$nident:$positive:$length:$bitscore:$evalue:$sstart:$send:$qstart:$qend:$qstrand:$qframe\n";
+	      }
           }
     }
     $previousQseqId = $qseqid;

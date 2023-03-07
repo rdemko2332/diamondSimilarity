@@ -22,6 +22,7 @@ process diamondSimilarity {
     val blastProgram  
     val blastArgs 
     val adjustMatchLength
+    val outputType
 
   output:
     path 'diamondSimilarity.out', emit: output_file
@@ -52,7 +53,7 @@ workflow nonConfiguredDatabase {
 
   main:
     database = createDatabase(params.databaseFasta)
-    diamondSimilarityResults = diamondSimilarity(seqs, database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength)
+    diamondSimilarityResults = diamondSimilarity(seqs, database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength, params.outputType)
     diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
     diamondSimilarityResults.log_file | collectFile(storeDir: params.outputDir, name: params.logFile)
 }
@@ -62,7 +63,7 @@ workflow preConfiguredDatabase {
     seqs
 
   main:
-    diamondSimilarityResults = diamondSimilarity(seqs, params.database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength)
+    diamondSimilarityResults = diamondSimilarity(seqs, params.database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength, params.outputType)
     diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
     diamondSimilarityResults.log_file | collectFile(storeDir: params.outputDir, name: params.logFile)
     
