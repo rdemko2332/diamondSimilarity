@@ -23,6 +23,7 @@ process diamondSimilarity {
     val blastArgs 
     val adjustMatchLength
     val outputType
+    val printSimSeqs
 
   output:
     path 'diamondSimilarity.out', emit: output_file
@@ -43,7 +44,22 @@ process sortOutput {
 
   script:
     """
-    sed 's/^>/\\x00&/' $output  | sort -z | tr -d '\\0' > diamondSimilarity.out
+    sed 's/^>/\\x00&/' $output  | sort -z | tr -d '\\0' > diamondSimilarity.out    
+    """
+}
+
+process sortSimSeqs {
+  publishDir params.outputDir, saveAs: {filename->params.dataFile}
+  
+  input:
+    path output
+        
+  output:
+    path 'diamondSimilarity.out'
+
+  script:
+    """
+    cat $output | sort -k 1 > diamondSimilarity.out
     """
 }
 
@@ -53,8 +69,13 @@ workflow nonConfiguredDatabase {
 
   main:
     database = createDatabase(params.databaseFasta)
-    diamondSimilarityResults = diamondSimilarity(seqs, database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength, params.outputType)
-    diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
+    diamondSimilarityResults = diamondSimilarity(seqs, database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength, params.outputType, params.printSimSeqs)
+    if (params.printSimSeqs) {
+       diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortSimSeqs
+    }
+    else {
+       diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
+    }
     diamondSimilarityResults.log_file | collectFile(storeDir: params.outputDir, name: params.logFile)
 }
 
@@ -63,8 +84,13 @@ workflow preConfiguredDatabase {
     seqs
 
   main:
-    diamondSimilarityResults = diamondSimilarity(seqs, params.database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength, params.outputType)
-    diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
+    diamondSimilarityResults = diamondSimilarity(seqs, params.database, params.pValCutoff, params.lengthCutoff, params.percentCutoff, params.blastProgram, params.blastArgs, params.adjustMatchLength, params.outputType, params.printSimSeqs)
+    if (params.printSimSeqs) {
+       diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortSimSeqs
+    }
+    else {
+       diamondSimilarityResults.output_file | collectFile(name: 'similarity.out') | sortOutput
+    }
     diamondSimilarityResults.log_file | collectFile(storeDir: params.outputDir, name: params.logFile)
     
 }

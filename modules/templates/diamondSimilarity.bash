@@ -10,7 +10,19 @@ diamond blastp \
 	--comp-based-stats 0 \
 	$blastArgs
 
-perl /usr/bin/diamondSimilarity.pl \
+if [ "$printSimSeqs" = true ]; then
+
+    perl /usr/bin/printSimSeqs.pl \
+     --result out.txt \
+     --output diamondSimilarity.out \
+     --minLen $lengthCutoff \
+     --minPercent $percentCutoff \
+     --minPval $pValCutoff \
+     --remMaskedRes $adjustMatchLength
+    
+else
+
+    perl /usr/bin/diamondSimilarity.pl \
      --fasta $fasta \
      --result out.txt \
      --output diamondSimilarity.out \
@@ -19,3 +31,9 @@ perl /usr/bin/diamondSimilarity.pl \
      --minPval $pValCutoff \
      --remMaskedRes $adjustMatchLength \
      --outputType $outputType
+    
+fi
+
+
+
+

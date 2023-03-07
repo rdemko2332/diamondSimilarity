@@ -61,14 +61,13 @@ while (my $line = <$data>) {
 	    print LOG "Multiple HSPS for $qseqid, $sseqid\n";
 	    die;
 	}
-
+        if ($remMaskedRes eq 'true') {
+	        $qseq =~ s/X//g;
+	        length($qseq) >= 10 ? $length = length($qseq) : print LOG "RemoveMaskedResiduesFromLength: error...length is less than 10 following removal of X's\n";
+	}
 	if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
 	    my $nonOverlappingPercent;
 	    my $roundedPercent;
-	    if ($remMaskedRes eq 'true') {
-	        $qseq =~ s/X//g;
-	        length($qseq) >= 10 ? $length = length($qseq) : print LOG "RemoveMaskedResiduesFromLength: error...length is less than 10 following removal of X's\n";
-	    }
 	    if ($slen < $qlen) {
 		$nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
 		$roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
@@ -88,13 +87,13 @@ while (my $line = <$data>) {
     } else {
 	  &addSubjectsNoCount($previousQseqId,$qseqid,0,@deflines);
 	  $subjectCount == 0 ? print LOG "No HSPS passed requirements for $qseqid\n" : print OUT ">$qseqid ($subjectCount subjects)\n";
+	  if ($remMaskedRes eq 'true') {
+	      $qseq =~ s/X//g;
+	      length($qseq) >= 10 ? $length = length($qseq) : print LOG "RemoveMaskedResiduesFromLength: error...length is less than 10 following removal of X's\n";
+	  }
 	  if ($length >= $minLen && $pident >= $minPercent && $evalue <= $minPval) {
 	      my $nonOverlappingPercent;
 	      my $roundedPercent;
-              if ($remMaskedRes eq 'true') {
-	          $qseq =~ s/X//g;
-	          length($qseq) >= 10 ? $length = length($qseq) : print LOG "RemoveMaskedResiduesFromLength: error...length is less than 10 following removal of X's\n";
-	      }
 	      if ($slen < $qlen) {
 		  $nonOverlappingPercent = ($slen - $gaps)/$slen * 100;
 		  $roundedPercent = sprintf("%.2f", $nonOverlappingPercent);
